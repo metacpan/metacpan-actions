@@ -1,0 +1,57 @@
+name: Update cpanfile.snapshot
+description: Update cpanfile.snapshot
+runs:
+  using: composite
+  steps:
+    - name: Set up installation local::lib
+      shell: bash
+      run: |
+        mkdir -p "$RUNNER_TEMP/update-snapshot/bin"
+        mkdir -p "$RUNNER_TEMP/update-snapshot/lib/perl5"
+        echo "$RUNNER_TEMP/update-snapshot/bin" >> "$GITHUB_PATH"
+        echo "PERL5LIB=$RUNNER_TEMP/update-snapshot/lib/perl5" >> "$GITHUB_ENV"
+    - name: Get cpm
+      shell: bash
+      run: |
+        curl -sLf -o "$RUNNER_TEMP/update-snapshot/bin/cpm" https://raw.githubusercontent.com/skaji/cpm/main/cpm
+        chmod +x "$RUNNER_TEMP/update-snapshot/bin/cpm"
+    - name: Install Carton and Carton::Snapshot
+      shell: bash
+      run: >
+        cpm install
+        Carton
+        Carton::Snapshot
+        --without-test
+        --show-build-log-on-failure
+        --local-lib-contained="$RUNNER_TEMP/update-snapshot"
+    - name: Get forced prereqs
+      id: prereqs-forced
+      if: hashFiles('cpanfile.forced')
+      uses: perl-actions/get-prereqs@v1
+      with:
+        sources: cpanfile.forced
+    - name: Install forced deps
+      if: hashFiles('cpanfile.forced')
+      env:
+        PREREQS: ${{ steps.prereqs-forced.outputs.prereqs }}
+      shell: bash
+      run: >
+        cpm install
+        --without-test
+        --resolver metacpan
+        --show-build-log-on-failure
+        --local-lib-contained=local
+        --reinstall
+        $PREREQS
+    - name: Install deps
+      shell: bash
+      run: >
+        cpm install
+        --cpanfile cpanfile
+        --resolver metacpan
+        --show-build-log-on-failure
+        --local-lib-contained=local
+        --with-develop
+    - name: Maybe update cpanfile.snapshot
+      shell: bash
+      run: carton
