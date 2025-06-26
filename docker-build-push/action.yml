@@ -1,33 +1,33 @@
-name: 'Docker build and push'
-description: 'Docker build and push'
+name: Docker build and push
+description: Docker build and push
 inputs:
   push:
-    descrption: 'Push tags'
+    descrption: Push tags
     required: false
     default: true
   docker_hub_username:
-    descrption: 'Docker Hub Username'
+    descrption: Docker Hub Username
     required: false
   docker_hub_password:
-    descrption: 'Docker Hub Password'
+    descrption: Docker Hub Password
     required: false
   ghcr_username:
-    descrption: 'GHCR Username'
+    descrption: GHCR Username
     required: false
   ghcr_password:
-    descrption: 'GHCR Password'
+    descrption: GHCR Password
     required: false
   slim:
-    descrption: 'Do a slim build'
+    descrption: Do a slim build
     required: false
     default: false
   platforms:
-    descrption: 'Platforms to build'
+    descrption: Platforms to build
     required: false
     default: linux/amd64,linux/arm64
 
 runs:
-  using: "composite"
+  using: composite
   steps:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v3
