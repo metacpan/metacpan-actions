@@ -1,0 +1,42 @@
+name: Update deployed tag
+description: Update deployed tag
+inputs:
+  token:
+    description: Token to use to run workflow
+    required: true
+  app:
+    descrption: App to update
+    required: true
+  environment:
+    descrption: Environment to update
+    required: true
+  base-tag:
+    description: Base tag
+    required: true
+  tag:
+    description: Tag to update to
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Update deployed image
+      id: dispatch
+      uses: benc-uk/workflow-dispatch@v1
+      with:
+        repo: metacpan/metacpan-k8s
+        ref: main
+        workflow: set-image.yml
+        token: ${{ inputs.token }}
+        inputs: |
+          {
+            "app": "${{ inputs.app }}",
+            "environment": "${{ inputs.environment }}",
+            "base-tag": "${{ inputs.base-tag }}",
+            "tag": "${{ inputs.tag }}"
+          }
+
+outputs:
+  workflowId:
+    description: workflow id
+    value: ${{ steps.dispatch.outputs.workflowId }}
