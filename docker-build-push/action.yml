@@ -17,6 +17,9 @@ inputs:
   ghcr_password:
     descrption: GHCR Password
     required: false
+  test-target:
+    description: Test target to run
+    required: false
   slim:
     descrption: Do a slim build
     required: false
@@ -47,6 +50,18 @@ runs:
         registry: ghcr.io
         username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build test image
+      id: docker-build-test
+      if: inputs.test-target
+      uses: docker/build-push-action@v6
+      with:
+        target: test
+        push: false
+        load: true
+    - name: Run Perl tests
+      if: inputs.test-target
+      run: docker run -i ${{ steps.docker-build-test.outputs.imageid }}
 
     - name: Docker meta
       id: meta
