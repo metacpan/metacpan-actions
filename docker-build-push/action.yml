@@ -1,0 +1,127 @@
+name: 'Docker build and push'
+description: 'Docker build and push'
+inputs:
+  push:
+    descrption: 'Push tags'
+    required: false
+    default: true
+  docker_hub_username:
+    descrption: 'Docker Hub Username'
+    required: false
+  docker_hub_password:
+    descrption: 'Docker Hub Password'
+    required: false
+  ghcr_username:
+    descrption: 'GHCR Username'
+    required: false
+  ghcr_password:
+    descrption: 'GHCR Password'
+    required: false
+  slim:
+    descrption: 'Do a slim build'
+    required: false
+    default: false
+  platforms:
+    descrption: 'Platforms to build'
+    required: false
+    default: linux/amd64,linux/arm64
+
+runs:
+  using: "composite"
+  steps:
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      if: inputs.docker_hub_username
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_HUB_USER }}
+        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+    - name: Login to GitHub Container Registry
+      if: inputs.ghcr_username
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Docker meta
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: |
+          docker.io/${{ github.repository }}
+          ghcr.io/${{ github.repository }}
+        flavor: |
+          latest=false
+          ${{ inputs.slim && 'suffix=-slim' || '' }}
+        tags: |
+          type=sha,format=long,priority=2000,enable={{is_default_branch}}
+          type=raw,value={{branch}}-{{date 'YYYMMDD.HHmmss'}},priority=1000,enable={{branch}}
+          type=ref,event=branch
+          type=ref,event=pr
+          type=raw,value=latest,enable={{is_default_branch}}
+      env:
+        DOCKER_METADATA_ANNOTATIONS_LEVELS: manifest,index
+    - name: Build and push
+      id: build
+      uses: docker/build-push-action@v6
+      with:
+        push: ${{ inputs.push }}
+        platforms: ${{ inputs.platforms }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        annotations: ${{ steps.meta.outputs.annotations }}
+        build-args: |
+          ${{ inputs.slim && 'SLIM_BUILD=1' || '' }}
+    - name: Find tag names
+      id: find-tag-names
+      uses: actions/github-script@v7
+      env:
+        DOCKER_META_JSON: ${{ steps.meta.outputs.json }}
+      with:
+        script: |
+          const tags = JSON.parse(process.env.DOCKER_META_JSON).tags;
+          const tag_fq = {};
+
+          for (const tag of tags) {
+            const [, short_tag] = tag.match(/:(.*)/);
+            if (short_tag in tag_fq) {
+              continue;
+            }
+            tag_fq[short_tag] = tag;
+            if (short_tag.match(/^sha-/)) {
+              tag_fq.sha = tag;
+            }
+            else if (short_tag.match(/^pr-\d+$/)) {
+              tag_fq.pr = tag;
+            }
+            else if (short_tag.match(/-\d+\.\d+$/)) {
+              tag_fq.ts = tag;
+            }
+          }
+
+          return tag_fq;
+
+outputs:
+  meta_json:
+    description: Metadata as JSON
+    value: ${{ steps.meta.outputs.json }}
+  tags:
+    description: Tags
+    value: ${{ steps.meta.outputs.tags }}
+  labels:
+    description: Labels
+    value: ${{ steps.meta.outputs.labels }}
+  annotations:
+    description: Annotations
+    value: ${{ steps.meta.outputs.annotations }}
+  imageid:
+    description: Image ID
+    value: ${{ steps.build.outputs.imageid }}
+  tag-fq:
+    description: Tag name to fully qualified name as JSON
+    value: ${{ steps.find-tag-names.outputs.result }}
