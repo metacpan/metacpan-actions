@@ -23,7 +23,6 @@ inputs:
   slim:
     descrption: Do a slim build
     required: false
-    default: false
   platforms:
     descrption: Platforms to build
     required: false
