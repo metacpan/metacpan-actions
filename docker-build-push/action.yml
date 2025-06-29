@@ -41,15 +41,15 @@ runs:
       if: inputs.docker_hub_username
       uses: docker/login-action@v3
       with:
-        username: ${{ secrets.DOCKER_HUB_USER }}
-        password: ${{ secrets.DOCKER_HUB_TOKEN }}
+        username: ${{ inputs.docker_hub_username }}
+        password: ${{ inputs.docker_hub_password }}
     - name: Login to GitHub Container Registry
       if: inputs.ghcr_username
       uses: docker/login-action@v3
       with:
         registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        username: ${{ inputs.ghcr_username }}
+        password: ${{ inputs.ghcr_password }}
 
     - name: Build test image
       id: docker-build-test
