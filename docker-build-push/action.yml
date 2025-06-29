@@ -61,6 +61,7 @@ runs:
         load: true
     - name: Run Perl tests
       if: inputs.test-target
+      shell: bash
       run: docker run -i ${{ steps.docker-build-test.outputs.imageid }}
 
     - name: Docker meta
