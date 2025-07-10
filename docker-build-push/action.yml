@@ -26,7 +26,7 @@ inputs:
   platforms:
     descrption: Platforms to build
     required: false
-    default: linux/amd64,linux/arm64
+    default: linux/amd64
 
 runs:
   using: composite
