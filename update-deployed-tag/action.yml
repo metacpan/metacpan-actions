@@ -26,7 +26,7 @@ runs:
       with:
         github-token: ${{ inputs.token }}
         script: |
-          const workflow = await github.actions.createWorkflowDispatch({
+          const workflow = await github.rest.actions.createWorkflowDispatch({
               owner: "metacpan",
               repo: "metacpan-k8s",
               workflow_id: "set-image.yml",
@@ -38,3 +38,4 @@ runs:
                 "tag": "${{ inputs.tag }}"
               }
           });
+          console.log(workflow);
