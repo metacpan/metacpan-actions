@@ -23,6 +23,9 @@ inputs:
   slim:
     descrption: Do a slim build
     required: false
+  build-args:
+    descrption: Build Arguments
+    required: false
   platforms:
     descrption: Platforms to build
     required: false
@@ -92,6 +95,7 @@ runs:
         annotations: ${{ steps.meta.outputs.annotations }}
         build-args: |
           ${{ inputs.slim && 'SLIM_BUILD=1' || '' }}
+          ${{ inputs.build-args }}
     - name: Find tag names
       id: find-tag-names
       uses: actions/github-script@v9

@@ -21,22 +21,20 @@ runs:
   using: "composite"
   steps:
     - name: Update deployed image
+      uses: actions/github-script@v9
       id: dispatch
-      uses: benc-uk/workflow-dispatch@v1
       with:
-        repo: metacpan/metacpan-k8s
-        ref: main
-        workflow: set-image.yml
-        token: ${{ inputs.token }}
-        inputs: |
-          {
-            "app": "${{ inputs.app }}",
-            "environment": "${{ inputs.environment }}",
-            "base-tag": "${{ inputs.base-tag }}",
-            "tag": "${{ inputs.tag }}"
-          }
-
-outputs:
-  workflowId:
-    description: workflow id
-    value: ${{ steps.dispatch.outputs.workflowId }}
+        github-token: ${{ inputs.token }}
+        script: |
+          const workflow = await github.actions.createWorkflowDispatch({
+              owner: "metacpan",
+              repo: "metacpan-k8s",
+              workflow_id: "set-image.yml",
+              ref: "main",
+              inputs: {
+                "app": "${{ inputs.app }}",
+                "environment": "${{ inputs.environment }}",
+                "base-tag": "${{ inputs.base-tag }}",
+                "tag": "${{ inputs.tag }}"
+              }
+          });
