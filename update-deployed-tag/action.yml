@@ -43,5 +43,13 @@ runs:
                 "base-tag": BASE_TAG,
                 "tag": TAG,
               },
+              return_run_details: true,
           });
-          console.log(workflow);
+          return workflow.data;
+outputs:
+  workflow-run-id:
+    description: Workflow Run ID
+    value: ${{ fromJSON(steps.dispatch.outputs.result).workflow_run_id }}
+  workflow-run-link:
+    description: Workflow Run Link
+    value: ${{ fromJSON(steps.dispatch.outputs.result).html_url }}
